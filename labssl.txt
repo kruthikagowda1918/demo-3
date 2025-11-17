@@ -1,0 +1,26 @@
+//execute the statement on command prompt
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
+
+//server.py
+import http.server, ssl
+
+server_address = ('localhost', 4443)
+httpd = http.server.HTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
+
+# Create SSL context instead of using deprecated wrap_socket
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+
+httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+
+print("Serving on https://localhost:4443")
+httpd.serve_forever()
+
+//index.py
+<h1>SSL/TLS Demo</h1>
+<p>Served via HTTPS (self-signed cert)</p>
+
+//Test TLS version with openssl client
+openssl s_client -connect localhost:4443 -tls1
+openssl s_client -connect localhost:4443 -tls1_1
+openssl s_client -connect localhost:4443 -tls1_2
